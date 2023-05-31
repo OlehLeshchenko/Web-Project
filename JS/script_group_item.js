@@ -1,0 +1,128 @@
+$(document).ready(function() {
+   $(".logo").click(function(){
+        window.location.href = '../index.html';
+    }); 
+
+   $(".pupil-link").click(function(){
+        window.location.href = 'group_item.html';
+    });
+
+  function getURIParam(href, key, def) {
+      if (arguments.length == 2) def = null;
+          var qs = href.substring(href.indexOf('?') + 1);
+          var s = qs.split('&');
+      for (var k in s) {
+          var s2 = s[k].split('=');
+          if (s2[0] == key)
+              return decodeURIComponent(s2[1]);
+      }
+      return def;
+  }
+
+  var href = window.location.href;
+  var user_id = getURIParam(href, "id", 0);
+  var user_group = user_id;
+  async function getResponsePupil(user_id){
+      let response = await fetch(`https://alexmarchukprod.com.ua/group?id=${user_id}`);
+      let content = await response.json();
+      let list_achivement = document.querySelector('.pupil-text__achivement');
+      $('#group_caption').text(content.title);
+      if (content.formMaster==null) $('#class_keriv').text("П.І.Б.")
+      else $('#class_keriv').text(content.formMaster.surname+" "+content.formMaster.name+" "+content.formMaster.patronymic);
+      $('#kilkict').text(content.students.length);
+      $(".conteiner-group__block1__list_keriv").attr('onclick', `to_keriv(${content.formMaster.id});`);
+      $('#specialization').text(content.specialization);
+      let k;
+      for (k in content.advancedSubjects){
+        const output = `<li>${content.advancedSubjects[k]}</li>`
+        $('#advancedSubjects').append(output)
+      }
+  }
+
+  getResponsePupil(user_id);
+async function getResponseGroup(user_id){
+    let response = await fetch(`https://alexmarchukprod.com.ua/group?id=${user_id}`);
+    let content = await response.json();
+    let key;
+    let table = document.querySelector('.search__table');
+    for (key in content.students){
+        patr = content.students[key].patronymic.split("").reverse();
+        if(patr[0]=="ч"){
+         avatar = "../IMG/avatar@3x.webp";
+        }
+        else avatar = "../IMG/avatar@3xgirl.png"
+        yoyo = 1;
+        if (content.formMaster == null) {
+            table_body.innerHTML+=`
+            <tr onclick="replace_win(${content.students[key].id});" class="search__table-tr border_rad">
+            <td class="search__table-tdh td_del search_items"><img style="width:48px; height:48px;" class="search__table_foto" src="${avatar}"></td>
+            <td class="search__table-tdh td_del">П.І.Б.</td>
+            <td class="search__table-tdh td_del td_oppo"></td>
+            <td class="search__table-tdh td_del"><img class="search__table-navig" src="../IMG/expand-more-white-48-dp.svg"></td></tr>`
+        }
+        else{
+            table_body.innerHTML+=`
+            <tr onclick="replace_win(${content.students[key].id});" class="search__table-tr border_rad">
+            <td class="search__table-tdh td_del search_items"><img style="width:48px;" class="search__table_foto" src="${avatar}"></td>
+            <td class="search__table-tdh td_del">${content.students[key].surname} ${content.students[key].name} ${content.students[key].patronymic}</td>
+            <td class="search__table-tdh td_del td_oppo"></td>
+            <td class="search__table-tdh td_del"><img class="search__table-navig" src="../IMG/expand-more-white-48-dp.svg"></td></tr>`
+        }
+   }
+ 
+}
+function replace_win(x){
+    window.location.href = `pupil_item.html?id=${x}?`;
+}
+getResponseGroup(user_id);
+function sort_age() {
+    var tbody =$('#table_body');
+    tbody.find('tr').sort(function(a, b) {
+        if($('.search__sorting').val()=='Зростанням') return $(".td_oppo", a).text().localeCompare($('.td_oppo', b).text());
+        else if($('.search__sorting').val()=='Зростанням'){
+            return $(".td").remove();
+            getResponseGroup(); 
+          } 
+          else return $(".td_oppo", b).text().localeCompare($(".td_oppo", a).text());
+    }).appendTo(tbody);}
+$(".search__sorting").change(function(){
+  sort_age();
+})
+
+document.querySelector("#search-group-input").oninput = function(){
+    var phrase = document.getElementById('search-group-input');
+    var table = document.getElementById('table_body');
+    var regPhrase = new RegExp(phrase.value, 'i');
+    var flag = false;
+    for (var i = 1; i < table.rows.length; i++) {
+        flag = false;
+        for (var j = table.rows[i].cells.length - 1; j >= 0; j--) {
+            flag = regPhrase.test(table.rows[i].cells[j].innerHTML);
+            if (flag) break;
+        }
+        if (flag) {
+            table.rows[i].style.display = "";
+            table.rows[i].classList.add('border_rad');
+        } else {
+            table.rows[i].style.display = "none";
+            table.rows[i].classList.remove('border_rad');
+        }
+    }
+    if ($("#table_body").find('tr[style="display: none;"]').length==$("#table_body").find('tr').length-1){
+        unknown.style.display = "";
+    }  
+    else unknown.style.display = "none"; 
+    for (var i = 1; i<=$("#table_body").find('tr[style!="display: none;"]').length-1;i++){
+        max_len = $("#table_body").find('tr[style!="display: none;"]').length-1;
+        if ($("#table_body").find('tr[style!="display: none;"]')[i]==$("#table_body").find('tr[style!="display: none;"]')[max_len]) {
+            $("#table_body").find('tr[style!="display: none;"]')[i].classList.add('border_rad-tr');
+            $(".border_rad-tr td").addClass('border_rad-tdh');
+        }
+        else {
+            $(".border_rad-tr td").removeClass('border_rad-tdh')
+            $("#table_body").find('tr[style!="display: none;"]')[i].classList.remove('border_rad-tr');
+        }
+    }
+}
+
+});
